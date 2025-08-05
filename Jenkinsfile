@@ -54,9 +54,13 @@ pipeline {
         stage('Deploy to Azure') {
             steps {
                 withCredentials([
-                    usernamePassword(credentialsId: 'azure-tenant', usernameVariable: 'AZ_CLIENT_ID', passwordVariable: 'AZ_CLIENT_SECRET'),
-                    string(credentialsId: 'azure-tenant', variable: 'AZ_TENANT_ID'),
-                    string(credentialsId: 'azure-subscription', variable: 'AZ_SUBSCRIPTION_ID')
+                    azureServicePrincipal(
+                        credentialsId: 'azure-tenant',
+                        subscriptionIdVariable: 'AZ_SUBSCRIPTION_ID',
+                        clientIdVariable: 'AZ_CLIENT_ID',
+                        clientSecretVariable: 'AZ_CLIENT_SECRET',
+                        tenantIdVariable: 'AZ_TENANT_ID'
+                    )
                 ]) {
                     bat '''
                         call az logout || exit 0
