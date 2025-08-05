@@ -26,15 +26,28 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                echo 'Running tests...'
-                bat 'npm test || echo "No tests found, continuing..."'
+                echo 'Running tests (3+ test cases expected)...'
+                bat '''
+                    call npm install --save-dev mocha
+                    call npx mocha test
+                    if errorlevel 1 (
+                        echo Tests failed!
+                        exit /b 1
+                    )
+                '''
             }
         }
 
         stage('Build') {
             steps {
                 echo 'Running build...'
-                bat 'npm run build || echo "No build script found, skipping..."'
+                bat '''
+                    call npm run build
+                    if errorlevel 1 (
+                        echo "No build script found or build failed, skipping build stage..."
+                        exit /b 0
+                    )
+                '''
             }
         }
 
@@ -46,10 +59,10 @@ pipeline {
                     string(credentialsId: 'azure-subscription', variable: 'AZ_SUBSCRIPTION_ID')
                 ]) {
                     bat '''
-                        az logout || exit 0
-                        az login --service-principal --username %AZ_CLIENT_ID% --password %AZ_CLIENT_SECRET% --tenant %AZ_TENANT_ID%
-                        az account set --subscription %AZ_SUBSCRIPTION_ID%
-                        func azure functionapp publish %AZURE_FUNCTION_APP% --javascript
+                        call az logout || exit 0
+                        call az login --service-principal --username %AZ_CLIENT_ID% --password %AZ_CLIENT_SECRET% --tenant %AZ_TENANT_ID%
+                        call az account set --subscription %AZ_SUBSCRIPTION_ID%
+                        call func azure functionapp publish %AZURE_FUNCTION_APP% --javascript
                     '''
                 }
             }
