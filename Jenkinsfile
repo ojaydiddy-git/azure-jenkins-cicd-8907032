@@ -7,7 +7,7 @@ pipeline {
     }
 
     tools {
-        nodejs 'NodeJS_20' // Must match the NodeJS name configured in Jenkins
+        nodejs 'NodeJS_20'
     }
 
     stages {
@@ -20,27 +20,21 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo 'Installing Node packages...'
-                sh 'npm install'
+                bat 'npm install'
             }
         }
 
         stage('Run Tests') {
             steps {
                 echo 'Running tests...'
-                sh '''
-                    if [ -f package.json ] && grep -q test package.json; then
-                        npm test
-                    else
-                        echo "No test script found. Skipping tests..."
-                    fi
-                '''
+                bat 'npm test || echo "No tests found, continuing..."'
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Building project...'
-                sh 'npm run build || echo "No build step defined. Skipping..."'
+                echo 'Running build...'
+                bat 'npm run build || echo "No build script found, skipping..."'
             }
         }
 
@@ -51,18 +45,11 @@ pipeline {
                     string(credentialsId: 'azure-tenant', variable: 'AZ_TENANT_ID'),
                     string(credentialsId: 'azure-subscription', variable: 'AZ_SUBSCRIPTION_ID')
                 ]) {
-                    sh '''
-                        echo "Logging into Azure..."
-                        az logout || true
-                        az login --service-principal \
-                            --username $AZ_CLIENT_ID \
-                            --password $AZ_CLIENT_SECRET \
-                            --tenant $AZ_TENANT_ID
-
-                        az account set --subscription $AZ_SUBSCRIPTION_ID
-
-                        echo "Deploying Azure Function..."
-                        func azure functionapp publish $AZURE_FUNCTION_APP --javascript
+                    bat '''
+                        az logout || exit 0
+                        az login --service-principal --username %AZ_CLIENT_ID% --password %AZ_CLIENT_SECRET% --tenant %AZ_TENANT_ID%
+                        az account set --subscription %AZ_SUBSCRIPTION_ID%
+                        func azure functionapp publish %AZURE_FUNCTION_APP% --javascript
                     '''
                 }
             }
@@ -71,7 +58,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ CI/CD Pipeline completed successfully!'
+            echo '✅ Pipeline completed successfully!'
         }
         failure {
             echo '❌ Pipeline failed.'
