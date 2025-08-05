@@ -54,7 +54,7 @@ pipeline {
         stage('Deploy to Azure') {
             steps {
                 withCredentials([
-                    usernamePassword(credentialsId: 'azure-sp', usernameVariable: 'AZ_CLIENT_ID', passwordVariable: 'AZ_CLIENT_SECRET'),
+                    usernamePassword(credentialsId: 'azure-service-principal', usernameVariable: 'AZ_CLIENT_ID', passwordVariable: 'AZ_CLIENT_SECRET'),
                     string(credentialsId: 'azure-tenant', variable: 'AZ_TENANT_ID'),
                     string(credentialsId: 'azure-subscription', variable: 'AZ_SUBSCRIPTION_ID')
                 ]) {
